@@ -1,22 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Microsoft.Extensions.Hosting;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AccountService.RPC
 {
-    public class RPCConsumer : BackgroundService
+    public class ExchangeConsumer : BackgroundService
     {
         private IConnection _connection;
         private IModel _channel;
 
-        public RPCConsumer()
+        private const string ExchangeName = "RandomExchangeName";
+        string queueName;
+
+        public ExchangeConsumer()
         {
             var factory = new ConnectionFactory
             {
@@ -27,7 +30,10 @@ namespace AccountService.RPC
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-            _channel.QueueDeclare("user", durable: false, exclusive: false, autoDelete: false, arguments: null);
+            _channel.ExchangeDeclare(ExchangeName, ExchangeType.Fanout);
+
+            queueName = _channel.QueueDeclare().QueueName;
+            _channel.QueueBind(queueName, ExchangeName, routingKey: "");
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,7 +55,7 @@ namespace AccountService.RPC
                 _channel.BasicAck(eventArgs.DeliveryTag, false);
             };
             //read the message
-            _channel.BasicConsume(queue: "user", false, consumer: consumer);
+            _channel.BasicConsume(queue: queueName, false, consumer: consumer);
 
             return Task.CompletedTask;
         }

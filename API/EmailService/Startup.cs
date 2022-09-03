@@ -10,9 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UserService.RPC;
 
-namespace UserService
+namespace EmailService
 {
     public class Startup
     {
@@ -30,12 +29,7 @@ namespace UserService
             options.SerializerSettings.ReferenceLoopHandling =
             Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-            // Inject RPC producer
-            services.AddSingleton<IRPCProducer, RPCProducer>();
-            services.AddSingleton<IExchangeProducer, ExchangeProducer>();
-            services.AddSingleton<IDirectProducer, DirectProducer>();
-            // Inject HttpClientFactory
-            services.AddHttpClient();
+            services.AddHostedService<DirectConsumer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
